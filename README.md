@@ -110,4 +110,4 @@ Tests with `true` (exit 0), `false` (exit 1), and a missing command (exit 127).
 
 ## License
 
-GPLv2. See [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE).
