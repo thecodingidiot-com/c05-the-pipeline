@@ -33,6 +33,7 @@ static int heredoc(char *limiter)
 {
     int     fd[2];
     char    *line;
+    size_t  len;
 
     if (pipe(fd) < 0) { perror("pipe"); exit(1); }
     line = tci_getline(STDIN_FILENO);
@@ -41,8 +42,10 @@ static int heredoc(char *limiter)
             free(line);
             break;
         }
-        write(fd[1], line, tci_strlen(line));
-        write(fd[1], "\n", 1);
+        len = tci_strlen(line);
+        write(fd[1], line, len);
+        if (len == 0 || line[len - 1] != '\n')  /* last line may lack one */
+            write(fd[1], "\n", 1);
         free(line);
         line = tci_getline(STDIN_FILENO);
     }

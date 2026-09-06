@@ -104,8 +104,9 @@ check_heredoc() {
     local got="${WORK_DIR}/got.txt"
     local expected="${WORK_DIR}/expected.txt"
 
-    printf '%s' "$input" | bash -c "$oracle" > "$expected" 2>/dev/null
-    printf '%s%s\n' "$input" "$limiter" | ./pipeline "$limiter" "$@" "$got" > /dev/null 2>&1
+    # a heredoc always terminates its last line, so the oracle must see one too
+    printf '%s\n' "$input" | bash -c "$oracle" > "$expected" 2>/dev/null
+    printf '%s\n%s\n' "$input" "$limiter" | ./pipeline "$limiter" "$@" "$got" > /dev/null 2>&1
 
     if diff -q "$expected" "$got" > /dev/null 2>&1; then
         pass "$label"
@@ -242,9 +243,13 @@ run_error_suite() {
     local lines="${WORK_DIR}/lines.txt"
     local got="${WORK_DIR}/got.txt"
 
-    # bad infile: must exit non-zero without creating outfile
+    # bad infile: must exit non-zero without creating outfile.
+    # The file has to EXIST but be unopenable: under the two-form CLI a first
+    # argument that does not exist is a heredoc LIMITER, not a broken infile.
     rm -f "${WORK_DIR}/bad_infile_out.txt"
-    ./pipeline "${WORK_DIR}/nonexistent_infile_xyz.txt" "cat" \
+    : > "${WORK_DIR}/unreadable_infile.txt"
+    chmod 000 "${WORK_DIR}/unreadable_infile.txt"
+    ./pipeline "${WORK_DIR}/unreadable_infile.txt" "cat" \
         "${WORK_DIR}/bad_infile_out.txt" > /dev/null 2>&1
     local code=$?
     if [[ $code -ne 0 ]]; then
